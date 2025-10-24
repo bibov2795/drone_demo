@@ -24,14 +24,38 @@ jobs:
         with:
           flutter-version: '3.9.0'
 
+      - name: Show Flutter version
+        run: flutter --version
+
+      - name: Flutter doctor (short)
+        run: flutter doctor -v || true
+
+      - name: Print MSVC / CMake / VS info (diagnostic)
+        shell: powershell
+        run: |
+          Write-Host '--- where msbuild ---'
+          where msbuild || Write-Host 'msbuild not found'
+          Write-Host '--- where cl (MSVC) ---'
+          where cl || Write-Host 'cl.exe not found'
+          Write-Host '--- where cmake ---'
+          where cmake || Write-Host 'cmake not found'
+          Write-Host '--- vswhere ---'
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          if (Test-Path $vswhere) {
+            & $vswhere -products * -requires Microsoft.Component.MSBuild -property installationPath -utf8 | Write-Host
+            & $vswhere -products * -format json | ConvertFrom-Json | Select-Object installationVersion,installationPath | Write-Host
+          } else {
+            Write-Host "vswhere not found at $vswhere"
+          }
+
       - name: Cache Pub packages
         uses: actions/cache@v4
         with:
           path: ${{ env.PUB_CACHE }}
           key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
 
-      - name: Flutter doctor
-        run: flutter doctor -v
+      - name: Enable Windows desktop (ensure toolchain enabled)
+        run: flutter config --enable-windows-desktop
 
       - name: Get dependencies
         run: flutter pub get
@@ -42,19 +66,42 @@ jobs:
       - name: Analyze (optional)
         run: flutter analyze || true
 
-      - name: Build Windows (release)
-        run: flutter build windows --release
+      - name: Build Windows (release, verbose for debug)
+        # NOTE: -v produces a lot of logs; remove -v after debugging
+        run: flutter build windows --release -v
+        timeout-minutes: 30
+
+      - name: Show built files
+        shell: powershell
+        run: |
+          if (Test-Path 'build\windows\runner\Release') {
+            Get-ChildItem -Path 'build\windows\runner\Release' -Recurse | Select-Object FullName, Length | Write-Host
+          } else {
+            Write-Host 'Release folder not found: build\windows\runner\Release'
+            Get-ChildItem -Path build -Recurse | Select-Object FullName, Length | Write-Host
+          }
+
+      - name: Zip Release folder (for easy download)
+        shell: powershell
+        run: |
+          $src = 'build\windows\runner\Release'
+          if (Test-Path $src) {
+            if (Test-Path windows-release.zip) { Remove-Item windows-release.zip -Force }
+            Compress-Archive -Path (Join-Path $src '*') -DestinationPath windows-release.zip -Force
+            Write-Host "Created windows-release.zip"
+            Get-ChildItem windows-release.zip | Write-Host
+          } else {
+            Write-Host "Skipping zip: Release folder not found"
+          }
 
       - name: Upload Windows build artifact
         uses: actions/upload-artifact@v4
         with:
           name: windows-release
           path: |
+            windows-release.zip
             build/windows/runner/Release
             build/windows/runner/Release/**
-
-      - name: Show built files
-        run: dir build\windows\runner\Release
 
   create-release:
     # This job runs only when a tag is pushed (e.g. v1.0.0)
@@ -82,8 +129,3 @@ jobs:
           name: Release ${{ github.ref_name }}
           files: |
             build/windows/runner/Release/**
-
-    # Notes:
-    # - The 'create-release' job is gated to tags to avoid creating releases for every push to main.
-    # - To publish a release, create a tag locally and push it: `git tag v1.0.0 && git push origin v1.0.0`.
-    # - The release action uploads all files under the Release folder as release assets.
