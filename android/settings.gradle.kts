@@ -1,9 +1,10 @@
 pluginManagement {
-    // 读取 flutterSdkPath，从 gradle.properties 或环境变量注入
-    val flutterSdkPath = extra["flutterSdkPath"]?.toString()
-        ?: System.getenv("FLUTTER_ROOT")
-        ?: throw GradleException("Missing flutterSdkPath or FLUTTER_ROOT")
+    // --- 关键：显式读取 flutterSdkPath ---
+    val flutterSdkPath = System.getenv("FLUTTER_ROOT")
+        ?: extra["flutterSdkPath"]?.toString()
+        ?: throw GradleException("Missing FLUTTER_ROOT or flutterSdkPath!")
 
+    // 引入 Flutter 的 Gradle 插件
     includeBuild("$flutterSdkPath/packages/flutter_tools/gradle")
 
     repositories {
