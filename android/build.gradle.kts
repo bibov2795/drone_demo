@@ -1,11 +1,7 @@
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-    }
-}
+// android/build.gradle.kts
 
 rootProject.buildDir = file("../build")
+
 subprojects {
     buildDir = file("${rootProject.buildDir}/${name}")
     evaluationDependsOn(":app")
@@ -14,3 +10,4 @@ subprojects {
 tasks.register<Delete>("clean") {
     delete(rootProject.buildDir)
 }
+
