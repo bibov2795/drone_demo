@@ -1,0 +1,83 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main ]
+    tags: ['v*']
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+    env:
+      # 中国镜像配置（基于你的README，加速pub和gradle）
+      PUB_HOSTED_URL: https://pub.flutter-io.cn
+      FLUTTER_STORAGE_BASE_URL: https://storage.flutter-io.cn
+      # Gradle镜像（可选，如果gradle下载慢）
+      GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -Dorg.gradle.daemon=false -Dhttp.proxyHost=mirror.biz -Dhttp.proxyPort=80 -Dhttps.proxyHost=mirror.biz -Dhttps.proxyPort=80"  # 替换为实际镜像如mirrors.aliyun.com
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'  # Flutter Android需要JDK 17+
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.3'  # 与你的Windows workflow匹配；调整如果需要
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run tests (optional, ignore failure)
+        run: flutter test --no-pub || true
+
+      - name: Analyze (optional)
+        run: flutter analyze || true
+
+      - name: Build Android APK (release)
+        run: flutter build apk --release  # 生成APK；如果想AAB，用flutter build appbundle --release
+
+      - name: Upload Android build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-release
+          path: build/app/outputs/flutter-apk/app-release.apk  # APK路径；如果AAB，用build/app/outputs/bundle/release/app-release.aab
+          retention-days: 7
+
+      - name: Show built files
+        run: ls -l build/app/outputs/flutter-apk/
+
+  create-release:
+    # 只在tag时运行，上传到Releases
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build-android
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: android-release
+
+      - name: List downloaded files
+        run: ls -lR
+
+      - name: Create GitHub Release and upload assets
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          files: app-release.apk  # 或app-release.aab，根据构建
