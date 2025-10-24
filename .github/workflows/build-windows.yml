@@ -52,7 +52,7 @@ jobs:
         with:
           name: windows-release
           path: |
-            path: build/windows/x64/runner/Release
+            path: build\windows\x64\runner\Release\**
            
 
       - name: Show built files
