@@ -52,11 +52,11 @@ jobs:
         with:
           name: windows-release
           path: |
-            build/windows/runner/Release
-            build/windows/runner/Release/**
+            path: build/windows/x64/runner/Release/**
+           
 
       - name: Show built files
-        run: dir build\windows\runner\Release
+        run: dir build\windows\x64\runner\Release
 
   create-release:
     # This job runs only when a tag is pushed (e.g. v1.0.0)
@@ -83,7 +83,7 @@ jobs:
           tag: ${{ github.ref_name }}
           name: Release ${{ github.ref_name }}
           files: |
-            build/windows/runner/Release/**
+            files: windows-release/**
 
     # Notes:
     # - The 'create-release' job is gated to tags to avoid creating releases for every push to main.
