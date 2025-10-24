@@ -1,7 +1,6 @@
 plugins {
     id("com.android.application")
-    id("org.jetbrains.kotlin.android") // ✅ 推荐正式 Kotlin 插件 ID
-    // Flutter 插件必须最后
+    id("org.jetbrains.kotlin.android")
     id("dev.flutter.flutter-gradle-plugin")
 }
 
@@ -28,8 +27,7 @@ android {
     }
 
     buildTypes {
-        getByName("release") {
-            // 签名配置可以后续加上
+        release {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
