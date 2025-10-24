@@ -1,0 +1,89 @@
+name: Build Windows executable and release
+
+on:
+  push:
+    branches: [ main ]
+    tags: ['v*']
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    env:
+      # Use a temporary pub cache path so we can cache it reliably across runs
+      PUB_CACHE: ${{ runner.temp }}/pub-cache
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.9.0'
+
+      - name: Cache Pub packages
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.PUB_CACHE }}
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+
+      - name: Flutter doctor
+        run: flutter doctor -v
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Run tests
+        run: flutter test --no-pub
+
+      - name: Analyze (optional)
+        run: flutter analyze || true
+
+      - name: Build Windows (release)
+        run: flutter build windows --release
+
+      - name: Upload Windows build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-release
+          path: |
+            build/windows/runner/Release
+            build/windows/runner/Release/**
+
+      - name: Show built files
+        run: dir build\windows\runner\Release
+
+  create-release:
+    # This job runs only when a tag is pushed (e.g. v1.0.0)
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build-windows
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-release
+
+      - name: List downloaded files
+        run: dir /s
+
+      - name: Create GitHub Release and upload assets
+        # ncipollo/release-action will create the release and upload provided files
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          files: |
+            build/windows/runner/Release/**
+
+    # Notes:
+    # - The 'create-release' job is gated to tags to avoid creating releases for every push to main.
+    # - To publish a release, create a tag locally and push it: `git tag v1.0.0 && git push origin v1.0.0`.
+    # - The release action uploads all files under the Release folder as release assets.

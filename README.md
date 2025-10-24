@@ -246,3 +246,10 @@ git remote add origin https://github.com/bibov2795/drone_demo.git
 git push -u origin main
 ```
 
+issue:
+- Solve the problem of ```git add .```
+   1. Run this in PowerShell (recommended if this is your machine and you trust the repository):
+   ```git config --global --add safe.directory 'D:/03_workspace/flutter_space/drone_demo'```
+   2. Verify the setting:
+   ```git config --global --get-all safe.directory```
+
