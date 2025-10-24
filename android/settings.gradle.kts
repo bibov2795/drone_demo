@@ -1,3 +1,5 @@
+import java.util.Properties  // Add this line for Properties class
+
 pluginManagement {
     val flutterSdkPath: String = {
         val properties = Properties()
