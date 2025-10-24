@@ -42,6 +42,9 @@ jobs:
 
       - name: Build Android APK (release)
         run: flutter build apk --release  # 生成APK；如果想AAB，用flutter build appbundle --release
+        env:
+          FLUTTER_ROOT: /opt/hostedtoolcache/flutter/stable-3.24.3-x64
+          flutterSdkPath: /opt/hostedtoolcache/flutter/stable-3.24.3-x64
 
       - name: Upload Android build artifact
         uses: actions/upload-artifact@v4
