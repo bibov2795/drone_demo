@@ -11,12 +11,8 @@ on:
 jobs:
   build-android:
     runs-on: ubuntu-latest
-    env:
-      # 中国镜像配置（基于你的README，加速pub和gradle）
-      PUB_HOSTED_URL: https://pub.flutter-io.cn
-      FLUTTER_STORAGE_BASE_URL: https://storage.flutter-io.cn
-      # Gradle镜像（可选，如果gradle下载慢）
-      GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -Dorg.gradle.daemon=false -Dhttp.proxyHost=mirror.biz -Dhttp.proxyPort=80 -Dhttps.proxyHost=mirror.biz -Dhttps.proxyPort=80"  # 替换为实际镜像如mirrors.aliyun.com
+    # 移除所有env镜像和代理设置，使用原始地址
+    # 无PUB_HOSTED_URL, FLUTTER_STORAGE_BASE_URL, GRADLE_OPTS
 
     steps:
       - name: Checkout repository
