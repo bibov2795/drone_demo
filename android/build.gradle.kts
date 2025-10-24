@@ -1,5 +1,3 @@
-// android/build.gradle.kts
-
 rootProject.buildDir = file("../build")
 
 subprojects {
