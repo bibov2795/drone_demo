@@ -22,8 +22,9 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.9.0'
-          channel: 'any'
+          flutter-version: '3.24.3'
+          channel: 'stable'
+          cache: true  # 可选：加速
 
       - name: Cache Pub packages
         uses: actions/cache@v4
