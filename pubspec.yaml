@@ -19,7 +19,9 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.24.3
+  sdk: '>=3.5.3 <4.0.0'  # 匹配你的本地 Dart 3.5.3
+  # 可选添加：
+  #flutter: '>=3.24.3'  # 如果想锁定 Flutter 版本
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
